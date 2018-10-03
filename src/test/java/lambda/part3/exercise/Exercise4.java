@@ -1,4 +1,4 @@
-package lambda.part3.exercise4;
+package lambda.part3.exercise;
 
 import com.google.common.primitives.Chars;
 import lambda.data.Employee;
