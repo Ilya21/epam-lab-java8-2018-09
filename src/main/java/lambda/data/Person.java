@@ -29,6 +29,9 @@ public class Person implements Serializable {
 
     public String getLastName(Person this) {
         return this.lastName;
+
+    public String getLastName() {
+        return lastName;
     }
 
     public int getAge() {
