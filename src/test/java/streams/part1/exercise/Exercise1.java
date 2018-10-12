@@ -5,67 +5,15 @@ import lambda.data.JobHistoryEntry;
 import lambda.data.Person;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 @SuppressWarnings({"ConstantConditions", "unused"})
 class Exercise1 {
-
-    @Test
-    void findPersonsEverWorkedInEpam() {
-        List<Employee> employees = getEmployees();
-
-        // TODO реализация, использовать Collectors.toList()
-        List<Person> personsEverWorkedInEpam = null;
-
-        assertThat(personsEverWorkedInEpam, contains(
-                employees.get(0).getPerson(),
-                employees.get(1).getPerson(),
-                employees.get(4).getPerson(),
-                employees.get(5).getPerson())
-        );
-    }
-
-    @Test
-    void findPersonsBeganCareerInEpam() {
-        List<Employee> employees = getEmployees();
-
-        // TODO реализация, использовать Collectors.toList()
-        List<Person> startedFromEpam = null;
-
-        assertThat(startedFromEpam, contains(
-                employees.get(0).getPerson(),
-                employees.get(1).getPerson(),
-                employees.get(4).getPerson()
-        ));
-    }
-
-    @Test
-    void findAllCompanies() {
-        List<Employee> employees = getEmployees();
-
-        // TODO реализация, использовать Collectors.toSet()
-        Set<String> companies = null;
-
-        assertThat(companies, containsInAnyOrder("EPAM", "google", "yandex", "mail.ru", "T-Systems"));
-    }
-
-    @Test
-    void findMinimalAgeOfEmployees() {
-        List<Employee> employees = getEmployees();
-
-        // TODO реализация
-        Integer minimalAge = null;
-
-        assertThat(minimalAge, is(21));
-    }
 
     private static List<Employee> getEmployees() {
         return Arrays.asList(
@@ -108,5 +56,70 @@ class Exercise1 {
                                 new JobHistoryEntry(1, "dev", "EPAM")
                         ))
         );
+    }
+
+    @Test
+    void findPersonsEverWorkedInEpam() {
+        List<Employee> employees = getEmployees();
+
+        List<Person> personsEverWorkedInEpam = employees.stream()
+                .filter(employee -> employee.getJobHistory().stream()
+                        .map(JobHistoryEntry::getEmployer)
+                        .anyMatch("EPAM"::equals))
+                .map(Employee::getPerson)
+                .collect(Collectors.toList());
+
+        assertThat(personsEverWorkedInEpam, contains(
+                employees.get(0).getPerson(),
+                employees.get(1).getPerson(),
+                employees.get(4).getPerson(),
+                employees.get(5).getPerson())
+        );
+    }
+
+    @Test
+    void findPersonsBeganCareerInEpam() {
+        List<Employee> employees = getEmployees();
+
+        List<Person> startedFromEpam = getEmployees().stream()
+                .filter(employee -> employee.getJobHistory().stream()
+                        .findFirst()
+                        .map(JobHistoryEntry::getEmployer)
+                        .filter("EPAM"::equals)
+                        .isPresent())
+                .map(Employee::getPerson)
+                .collect(Collectors.toList());
+
+        assertThat(startedFromEpam, contains(
+                employees.get(0).getPerson(),
+                employees.get(1).getPerson(),
+                employees.get(4).getPerson()
+        ));
+    }
+
+    @Test
+    void findAllCompanies() {
+        List<Employee> employees = getEmployees();
+
+        Set<String> companies = getEmployees().stream()
+                                              .map(Employee::getJobHistory)
+                                              .flatMap(Collection::stream)
+                                              .map(JobHistoryEntry::getEmployer)
+                                              .collect(Collectors.toSet());
+
+        assertThat(companies, containsInAnyOrder("EPAM", "google", "yandex", "mail.ru", "T-Systems"));
+    }
+
+    @Test
+    void findMinimalAgeOfEmployees() {
+        List<Employee> employees = getEmployees();
+
+        Integer minimalAge = getEmployees().stream()
+                                           .map(Employee::getPerson)
+                                           .map(Person::getAge)
+                                           .min(Integer::compareTo)
+                                           .orElseThrow(RuntimeException::new);
+
+        assertThat(minimalAge, is(21));
     }
 }
